@@ -1,0 +1,16 @@
+{
+  "name": "Markaz Malik Deenar - Payment Voucher",
+  "short_name": "MMD Voucher",
+  "description": "Digital Payment Voucher for Markaz Malik Deenar - fill, print and keep a 2-day history.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9edf1",
+  "theme_color": "#0d4f8b",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MMD Payment Voucher</title>
+<meta name="theme-color" content="#0d4f8b">
+<meta name="description" content="Markaz Malik Deenar - digital Payment Voucher, print &amp; PDF, with history">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="toolbar no-print">
+  <div class="toolbar-left">
+    <img src="assets/logo.png" alt="" class="toolbar-logo">
+    <span class="toolbar-title">MMD Payment Voucher</span>
+  </div>
+  <div class="toolbar-actions">
+    <button id="btnNew" class="btn btn-ghost" type="button">+ New</button>
+    <button id="btnSave" class="btn btn-primary" type="button">Save to History</button>
+    <button id="btnPrint" class="btn" type="button">🖨️ Print</button>
+    <button id="btnPdf" class="btn" type="button">⬇️ Download PDF</button>
+    <button id="btnInstall" class="btn btn-accent" type="button" hidden>📲 Install App</button>
+    <button id="btnHistoryToggle" class="btn btn-ghost" type="button">History</button>
+  </div>
+</header>
+
+<div id="saveToast" class="toast no-print" hidden></div>
+
+<main class="workspace">
+
+  <div class="paper-wrap">
+    <section id="voucherSheet" class="voucher-sheet">
+
+      <div class="letterhead">
+        <img src="assets/logo.png" alt="Markaz logo" class="logo">
+        <div class="org-block">
+          <h1 class="org-name">Markaz Malik Deenar</h1>
+          <p class="org-sub"><strong>Run by:</strong> Markazu Saquafathi Sunniyya</p>
+          <p class="org-sub">Kollam, Koyilandy, Calicut, Kerala-673307</p>
+        </div>
+        <div class="org-contact">
+          <p>Email: parappally@markaz.in</p>
+          <p>Mob: 9072 500 432</p>
+        </div>
+      </div>
+
+      <h2 class="voucher-title">PAYMENT VOUCHER</h2>
+
+      <div class="v-row v-row-top">
+        <div class="v-field v-no">
+          <label for="voucherNo">No:</label>
+          <input type="text" id="voucherNo" class="dotted" autocomplete="off">
+        </div>
+        <div class="v-field v-date">
+          <label for="voucherDate">Date:</label>
+          <input type="date" id="voucherDate" class="dotted">
+        </div>
+      </div>
+
+      <div class="v-row">
+        <label for="headOfAc">Head of A/c</label>
+        <div class="combo grow" id="headOfAcCombo">
+          <input type="text" id="headOfAc" class="dotted" autocomplete="off"
+                 role="combobox" aria-expanded="false" aria-autocomplete="list"
+                 aria-controls="headOfAcList" placeholder="Type to search or click to select…">
+          <ul id="headOfAcList" class="combo-list no-print" hidden role="listbox"></ul>
+        </div>
+      </div>
+
+      <div class="v-row">
+        <label for="nameAddress">Name &amp; Address</label>
+        <input type="text" id="nameAddress" class="dotted grow" autocomplete="off">
+      </div>
+
+      <div class="v-row v-row-amount">
+        <label>Received a sum of Rs</label>
+        <input type="number" id="amount" class="dotted amount-box" min="0" step="0.01" inputmode="decimal">
+        <label>Rupees</label>
+        <span id="amountWords" class="dotted grow words"></span>
+      </div>
+
+      <div class="v-row v-row-towards">
+        <label for="towards">Towards</label>
+        <textarea id="towards" class="dotted grow ruled" rows="2" autocomplete="off"></textarea>
+      </div>
+
+      <div class="v-row v-row-mode">
+        <label>By</label>
+        <select id="paymentMode" class="dotted">
+          <option value="Cash">Cash</option>
+          <option value="Cheque">Cheque</option>
+          <option value="Online">Online / Transfer</option>
+        </select>
+        <label id="refLabel">Cheque No</label>
+        <input type="text" id="chequeNo" class="dotted small" autocomplete="off">
+        <label id="datedLabel">Dated</label>
+        <input type="date" id="chequeDate" class="dotted small">
+        <label id="ofLabel">of</label>
+        <input type="text" id="bankName" class="dotted grow" placeholder="Bank" autocomplete="off">
+      </div>
+
+      <div class="v-row v-row-prepared">
+        <div class="v-field grow">
+          <label for="preparedBy">Prepared by</label>
+          <input type="text" id="preparedBy" class="dotted grow" autocomplete="off">
+        </div>
+        <div class="signature-block">
+          <div class="sign-line"></div>
+          <label>Name &amp; Signature of Payee</label>
+        </div>
+      </div>
+
+      <div class="v-row v-row-passed">
+        <label>Passed for Rs</label>
+        <input type="number" id="passedAmount" class="dotted amount-box" min="0" step="0.01" inputmode="decimal">
+        <label>Rupees</label>
+        <span id="passedWords" class="dotted grow words"></span>
+      </div>
+
+      <div class="v-row v-row-footer">
+        <div class="sign-col">
+          <div class="sign-line"></div>
+          <label>Accountant</label>
+        </div>
+        <div class="sign-col right">
+          <div class="sign-line"></div>
+          <label>Administrative Officer</label>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <aside id="historyPanel" class="history-panel no-print">
+    <div class="history-head">
+      <h3>History <span class="hint">(last 2 days)</span></h3>
+      <button id="btnHistoryClose" class="icon-btn" type="button" aria-label="Close">✕</button>
+    </div>
+    <ul id="historyList" class="history-list"></ul>
+    <p id="historyEmpty" class="history-empty">No vouchers saved in the last 2 days.</p>
+  </aside>
+
+</main>
+
+<div id="printFrame" class="print-only"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
