@@ -21,8 +21,9 @@
   <div class="toolbar-actions">
     <button id="btnNew" class="btn btn-ghost" type="button">+ New</button>
     <button id="btnSave" class="btn btn-primary" type="button">Save to History</button>
+    <button id="btnPreview" class="btn" type="button">👁️ Preview</button>
     <button id="btnPrint" class="btn" type="button">🖨️ Print</button>
-    <button id="btnPdf" class="btn" type="button">⬇️ Download PDF</button>
+    <button id="btnPdf" class="btn" type="button">⬇️ PDF</button>
     <button id="btnInstall" class="btn btn-accent" type="button" hidden>📲 Install App</button>
     <button id="btnHistoryToggle" class="btn btn-ghost" type="button">History</button>
   </div>
@@ -30,123 +31,210 @@
 
 <div id="saveToast" class="toast no-print" hidden></div>
 
-<main class="workspace">
+<main class="workspace no-print">
+  <form id="voucherForm" class="voucher-form" autocomplete="off">
 
-  <div class="paper-wrap">
-    <section id="voucherSheet" class="voucher-sheet">
-
-      <div class="letterhead">
-        <img src="assets/logo.png" alt="Markaz logo" class="logo">
-        <div class="org-block">
-          <h1 class="org-name">Markaz Malik Deenar</h1>
-          <p class="org-sub"><strong>Run by:</strong> Markazu Saquafathi Sunniyya</p>
-          <p class="org-sub">Kollam, Koyilandy, Calicut, Kerala-673307</p>
+    <section class="form-card">
+      <div class="form-card-head"><span class="fc-icon">🧾</span><h2>Voucher Details</h2></div>
+      <div class="form-grid two">
+        <div class="field">
+          <label for="voucherNo">Voucher No.</label>
+          <input type="text" id="voucherNo" placeholder="e.g. 101" autocomplete="off">
         </div>
-        <div class="org-contact">
-          <p>Email: parappally@markaz.in</p>
-          <p>Mob: 9072 500 432</p>
+        <div class="field">
+          <label for="voucherDate">Date</label>
+          <input type="date" id="voucherDate">
         </div>
       </div>
-
-      <h2 class="voucher-title">PAYMENT VOUCHER</h2>
-
-      <div class="v-row v-row-top">
-        <div class="v-field v-no">
-          <label for="voucherNo">No:</label>
-          <input type="text" id="voucherNo" class="dotted" autocomplete="off">
-        </div>
-        <div class="v-field v-date">
-          <label for="voucherDate">Date:</label>
-          <input type="date" id="voucherDate" class="dotted">
-        </div>
-      </div>
-
-      <div class="v-row">
-        <label for="headOfAc">Head of A/c</label>
-        <div class="combo grow" id="headOfAcCombo">
-          <input type="text" id="headOfAc" class="dotted" autocomplete="off"
+      <div class="field">
+        <label for="headOfAc">Head of Account</label>
+        <div class="combo" id="headOfAcCombo">
+          <input type="text" id="headOfAc" autocomplete="off"
                  role="combobox" aria-expanded="false" aria-autocomplete="list"
                  aria-controls="headOfAcList" placeholder="Type to search or click to select…">
-          <ul id="headOfAcList" class="combo-list no-print" hidden role="listbox"></ul>
+          <ul id="headOfAcList" class="combo-list" hidden role="listbox"></ul>
         </div>
       </div>
-
-      <div class="v-row">
+      <div class="field">
         <label for="nameAddress">Name &amp; Address</label>
-        <input type="text" id="nameAddress" class="dotted grow" autocomplete="off">
+        <input type="text" id="nameAddress" placeholder="Payee name and address" autocomplete="off">
       </div>
+    </section>
 
-      <div class="v-row v-row-amount">
-        <label>Received a sum of Rs</label>
-        <input type="number" id="amount" class="dotted amount-box" min="0" step="0.01" inputmode="decimal">
-        <label>Rupees</label>
-        <span id="amountWords" class="dotted grow words"></span>
+    <section class="form-card">
+      <div class="form-card-head"><span class="fc-icon">💰</span><h2>Amount</h2></div>
+      <div class="field">
+        <label for="amount">Received a Sum of Rs.</label>
+        <input type="number" id="amount" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
       </div>
-
-      <div class="v-row v-row-towards">
+      <div class="field">
+        <label>In Words</label>
+        <div id="amountWords" class="amount-words">—</div>
+      </div>
+      <div class="field">
         <label for="towards">Towards</label>
-        <textarea id="towards" class="dotted grow ruled" rows="2" autocomplete="off"></textarea>
+        <textarea id="towards" rows="3" placeholder="Purpose / description of payment" autocomplete="off"></textarea>
       </div>
+    </section>
 
-      <div class="v-row v-row-mode">
-        <label>By</label>
-        <select id="paymentMode" class="dotted">
+    <section class="form-card">
+      <div class="form-card-head"><span class="fc-icon">💳</span><h2>Payment Mode</h2></div>
+      <div class="field">
+        <label for="paymentMode">Paid By</label>
+        <select id="paymentMode">
           <option value="Cash">Cash</option>
           <option value="Cheque">Cheque</option>
           <option value="Online">Online / Transfer</option>
         </select>
-        <label id="refLabel">Cheque No</label>
-        <input type="text" id="chequeNo" class="dotted small" autocomplete="off">
-        <label id="datedLabel">Dated</label>
-        <input type="date" id="chequeDate" class="dotted small">
-        <label id="ofLabel">of</label>
-        <input type="text" id="bankName" class="dotted grow" placeholder="Bank" autocomplete="off">
       </div>
-
-      <div class="v-row v-row-prepared">
-        <div class="v-field grow">
-          <label for="preparedBy">Prepared by</label>
-          <input type="text" id="preparedBy" class="dotted grow" autocomplete="off">
+      <div class="form-grid two" id="chequeFieldsWrap">
+        <div class="field">
+          <label id="refLabel" for="chequeNo">Cheque No</label>
+          <input type="text" id="chequeNo" autocomplete="off">
         </div>
-        <div class="signature-block">
-          <div class="sign-line"></div>
-          <label>Name &amp; Signature of Payee</label>
+        <div class="field">
+          <label id="datedLabel" for="chequeDate">Dated</label>
+          <input type="date" id="chequeDate">
         </div>
       </div>
-
-      <div class="v-row v-row-passed">
-        <label>Passed for Rs</label>
-        <input type="number" id="passedAmount" class="dotted amount-box" min="0" step="0.01" inputmode="decimal">
-        <label>Rupees</label>
-        <span id="passedWords" class="dotted grow words"></span>
+      <div class="field" id="bankFieldWrap">
+        <label id="ofLabel" for="bankName">Bank</label>
+        <input type="text" id="bankName" placeholder="Bank name" autocomplete="off">
       </div>
-
-      <div class="v-row v-row-footer">
-        <div class="sign-col">
-          <div class="sign-line"></div>
-          <label>Accountant</label>
-        </div>
-        <div class="sign-col right">
-          <div class="sign-line"></div>
-          <label>Administrative Officer</label>
-        </div>
-      </div>
-
     </section>
-  </div>
 
-  <aside id="historyPanel" class="history-panel no-print">
-    <div class="history-head">
-      <h3>History <span class="hint">(last 2 days)</span></h3>
-      <button id="btnHistoryClose" class="icon-btn" type="button" aria-label="Close">✕</button>
-    </div>
-    <ul id="historyList" class="history-list"></ul>
-    <p id="historyEmpty" class="history-empty">No vouchers saved in the last 2 days.</p>
-  </aside>
+    <section class="form-card">
+      <div class="form-card-head"><span class="fc-icon">✍️</span><h2>Authorization</h2></div>
+      <div class="field">
+        <label for="preparedBy">Prepared By</label>
+        <input type="text" id="preparedBy" autocomplete="off">
+      </div>
+      <div class="form-grid two">
+        <div class="field">
+          <label for="passedAmount">Passed for Rs.</label>
+          <input type="number" id="passedAmount" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>In Words</label>
+          <div id="passedWords" class="amount-words">—</div>
+        </div>
+      </div>
+    </section>
 
+  </form>
 </main>
 
-<div id="printFrame" class="print-only"></div>
+<div id="historyBackdrop" class="history-backdrop no-print hidden"></div>
+<aside id="historyPanel" class="history-panel no-print hidden">
+  <div class="history-head">
+    <h3>History <span class="hint">(last 2 days)</span></h3>
+    <button id="btnHistoryClose" class="icon-btn" type="button" aria-label="Close">✕</button>
+  </div>
+  <ul id="historyList" class="history-list"></ul>
+  <p id="historyEmpty" class="history-empty">No vouchers saved in the last 2 days.</p>
+</aside>
+
+<div id="previewModal" class="preview-modal no-print" hidden>
+  <div class="preview-modal-backdrop" id="previewBackdrop"></div>
+  <div class="preview-modal-body">
+    <button id="btnPreviewClose" class="preview-close" type="button">✕ Close Preview</button>
+    <div class="paper-wrap">
+
+      <div id="printTemplate" class="voucher-sheet">
+
+        <div class="letterhead">
+          <img src="assets/logo.png" alt="Markaz logo" class="logo">
+          <div class="org-block">
+            <h1 class="org-name">Markaz Malik Deenar</h1>
+            <p class="org-sub"><strong>Run by:</strong> Markazu Saquafathi Sunniyya</p>
+            <p class="org-sub">Kollam, Koyilandy, Calicut, Kerala-673307</p>
+          </div>
+          <div class="org-contact">
+            <p>Email: parappally@markaz.in</p>
+            <p>Mob: 9072 500 432</p>
+          </div>
+        </div>
+
+        <h2 class="voucher-title">PAYMENT VOUCHER</h2>
+
+        <div class="v-row v-row-top">
+          <div class="v-field v-no">
+            <label>No:</label>
+            <span id="p_no" class="dotted"></span>
+          </div>
+          <div class="v-field v-date">
+            <label>Date:</label>
+            <span id="p_date" class="dotted"></span>
+          </div>
+        </div>
+
+        <div class="v-row">
+          <label>Head of A/c</label>
+          <span id="p_headOfAc" class="dotted grow"></span>
+        </div>
+
+        <div class="v-row">
+          <label>Name &amp; Address</label>
+          <span id="p_nameAddress" class="dotted grow"></span>
+        </div>
+
+        <div class="v-row v-row-amount">
+          <label>Received a sum of Rs</label>
+          <span id="p_amount" class="dotted amount-box"></span>
+          <label>Rupees</label>
+          <span id="p_amountWords" class="dotted grow words"></span>
+        </div>
+
+        <div class="v-row v-row-towards">
+          <label>Towards</label>
+          <span id="p_towards" class="dotted grow ruled"></span>
+        </div>
+
+        <div class="v-row v-row-mode">
+          <label>By</label>
+          <span id="p_paymentMode" class="dotted"></span>
+          <label id="p_refLabel">Cheque No</label>
+          <span id="p_chequeNo" class="dotted small"></span>
+          <label id="p_datedLabel">Dated</label>
+          <span id="p_chequeDate" class="dotted small"></span>
+          <label id="p_ofLabel">of</label>
+          <span id="p_bankName" class="dotted grow"></span>
+        </div>
+
+        <div class="v-row v-row-prepared">
+          <div class="v-field grow">
+            <label>Prepared by</label>
+            <span id="p_preparedBy" class="dotted grow"></span>
+          </div>
+          <div class="signature-block">
+            <div class="sign-line"></div>
+            <label>Name &amp; Signature of Payee</label>
+          </div>
+        </div>
+
+        <div class="v-row v-row-passed">
+          <label>Passed for Rs</label>
+          <span id="p_passedAmount" class="dotted amount-box"></span>
+          <label>Rupees</label>
+          <span id="p_passedWords" class="dotted grow words"></span>
+        </div>
+
+        <div class="v-row v-row-footer">
+          <div class="sign-col">
+            <div class="sign-line"></div>
+            <label>Accountant</label>
+          </div>
+          <div class="sign-col right">
+            <div class="sign-line"></div>
+            <label>Administrative Officer</label>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

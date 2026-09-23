@@ -66,10 +66,17 @@
     return words + " Only";
   }
 
+  function formatAmountDisplay(value) {
+    var n = parseFloat(value);
+    if (isNaN(n)) return "";
+    return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   /* ---------------- Element refs ---------------- */
   var $ = function (id) { return document.getElementById(id); };
 
   var els = {
+    form: $("voucherForm"),
     no: $("voucherNo"),
     date: $("voucherDate"),
     headOfAc: $("headOfAc"),
@@ -79,20 +86,24 @@
     amountWords: $("amountWords"),
     towards: $("towards"),
     paymentMode: $("paymentMode"),
+    chequeFieldsWrap: $("chequeFieldsWrap"),
+    bankFieldWrap: $("bankFieldWrap"),
     refLabel: $("refLabel"),
     datedLabel: $("datedLabel"),
-    ofLabel: $("ofLabel"),
     chequeNo: $("chequeNo"),
     chequeDate: $("chequeDate"),
     bankName: $("bankName"),
     preparedBy: $("preparedBy"),
     passedAmount: $("passedAmount"),
     passedWords: $("passedWords"),
-    sheet: $("voucherSheet"),
     toast: $("saveToast"),
     historyPanel: $("historyPanel"),
+    historyBackdrop: $("historyBackdrop"),
     historyList: $("historyList"),
-    historyEmpty: $("historyEmpty")
+    historyEmpty: $("historyEmpty"),
+    previewModal: $("previewModal"),
+    previewBackdrop: $("previewBackdrop"),
+    printTemplate: $("printTemplate")
   };
 
   var passedTouchedByUser = false;
@@ -111,20 +122,23 @@
   }
 
   function refreshWords() {
-    els.amountWords.textContent = amountToWords(els.amount.value);
+    els.amountWords.textContent = els.amount.value ? amountToWords(els.amount.value) : "—";
     if (!passedTouchedByUser) {
       els.passedAmount.value = els.amount.value;
     }
-    els.passedWords.textContent = amountToWords(els.passedAmount.value);
+    els.passedWords.textContent = els.passedAmount.value ? amountToWords(els.passedAmount.value) : "—";
+    syncPrintTemplate();
   }
 
   function updatePaymentModeUI() {
     var mode = els.paymentMode.value;
-    els.refLabel.textContent = mode === "Online" ? "Ref / Txn No" : "Cheque No";
     var hide = mode === "Cash";
-    [els.refLabel, els.chequeNo, els.datedLabel, els.chequeDate, els.ofLabel, els.bankName].forEach(function (el) {
-      el.style.visibility = hide ? "hidden" : "visible";
-    });
+
+    els.refLabel.textContent = mode === "Online" ? "Ref / Txn No" : "Cheque No";
+    els.chequeFieldsWrap.classList.toggle("hide", hide);
+    els.bankFieldWrap.classList.toggle("hide", hide);
+
+    syncPrintTemplate();
   }
 
   /* ---------------- Head of A/c: searchable select ---------------- */
@@ -175,7 +189,7 @@
 
   function wireHeadOfAcCombo() {
     els.headOfAc.addEventListener("focus", function () { renderHeadList(els.headOfAc.value); });
-    els.headOfAc.addEventListener("input", function () { renderHeadList(els.headOfAc.value); });
+    els.headOfAc.addEventListener("input", function () { renderHeadList(els.headOfAc.value); syncPrintTemplate(); });
     els.headOfAc.addEventListener("blur", function () { setTimeout(closeHeadList, 150); });
     els.headOfAc.addEventListener("keydown", function (e) {
       if (els.headOfAcList.hidden && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
@@ -187,7 +201,7 @@
       else if (e.key === "Enter") {
         var items = headListItems();
         var active = items.filter(function (li) { return li.classList.contains("active"); })[0];
-        if (active) { e.preventDefault(); els.headOfAc.value = active.getAttribute("data-value"); closeHeadList(); }
+        if (active) { e.preventDefault(); els.headOfAc.value = active.getAttribute("data-value"); closeHeadList(); syncPrintTemplate(); }
       } else if (e.key === "Escape") {
         closeHeadList();
       }
@@ -197,6 +211,7 @@
       if (!li) return;
       els.headOfAc.value = li.getAttribute("data-value");
       closeHeadList();
+      syncPrintTemplate();
     });
   }
 
@@ -234,11 +249,40 @@
     passedTouchedByUser = (data.passedAmount && data.passedAmount !== data.amount);
     refreshWords();
     updatePaymentModeUI();
+    syncPrintTemplate();
   }
 
   function clearForm() {
     populate({ date: todayISO(), paymentMode: "Cash" });
     els.no.focus();
+  }
+
+  /* ---------------- Print template sync (exact voucher replica for preview/print) ---------------- */
+  function syncPrintTemplate() {
+    var d = collect();
+
+    $("p_no").textContent = d.no || "";
+    $("p_date").textContent = fmtDateDisplay(d.date);
+    $("p_headOfAc").textContent = d.headOfAc || "";
+    $("p_nameAddress").textContent = d.nameAddress || "";
+    $("p_amount").textContent = d.amount !== "" ? formatAmountDisplay(d.amount) : "";
+    $("p_amountWords").textContent = amountToWords(d.amount);
+    $("p_towards").textContent = d.towards || "";
+    $("p_paymentMode").textContent = d.paymentMode === "Online" ? "Online / Transfer" : (d.paymentMode || "Cash");
+    $("p_chequeNo").textContent = d.chequeNo || "";
+    $("p_chequeDate").textContent = fmtDateDisplay(d.chequeDate);
+    $("p_bankName").textContent = d.bankName || "";
+    $("p_preparedBy").textContent = d.preparedBy || "";
+    $("p_passedAmount").textContent = d.passedAmount !== "" ? formatAmountDisplay(d.passedAmount) : "";
+    $("p_passedWords").textContent = amountToWords(d.passedAmount);
+
+    var mode = d.paymentMode || "Cash";
+    var pRefLabel = $("p_refLabel");
+    pRefLabel.textContent = mode === "Online" ? "Ref / Txn No" : "Cheque No";
+    var hide = mode === "Cash";
+    [pRefLabel, $("p_chequeNo"), $("p_datedLabel"), $("p_chequeDate"), $("p_ofLabel"), $("p_bankName")].forEach(function (el) {
+      el.style.visibility = hide ? "hidden" : "visible";
+    });
   }
 
   /* ---------------- History (shared backend, 2-day retention server-side) ---------------- */
@@ -344,12 +388,34 @@
     toastTimer = setTimeout(function () { els.toast.hidden = true; }, 2600);
   }
 
+  /* ---------------- History drawer open/close ---------------- */
+  function openHistory() {
+    els.historyPanel.classList.remove("hidden");
+    els.historyBackdrop.classList.remove("hidden");
+  }
+  function closeHistory() {
+    els.historyPanel.classList.add("hidden");
+    els.historyBackdrop.classList.add("hidden");
+  }
+
+  /* ---------------- Preview modal open/close ---------------- */
+  function openPreview() {
+    syncPrintTemplate();
+    els.previewModal.hidden = false;
+    setTimeout(fitPreviewToScreen, 30);
+  }
+  function closePreview() {
+    els.previewModal.hidden = true;
+  }
+
   /* ---------------- Print / PDF ---------------- */
   function doPrint() {
+    syncPrintTemplate();
     window.print();
   }
 
   function doDownloadPdf() {
+    syncPrintTemplate();
     var data = collect();
     var suggested = "Voucher_" + (data.no || "draft") + "_" + (data.date || todayISO());
     var prevTitle = document.title;
@@ -363,20 +429,21 @@
     setTimeout(function () { window.print(); }, 350);
   }
 
-  /* ---------------- Screen scaling for small screens ---------------- */
-  function fitSheetToScreen() {
-    if (window.matchMedia("print").matches) return;
-    var wrap = document.querySelector(".paper-wrap");
-    var sheet = els.sheet;
+  /* ---------------- Scale the preview paper to fit small screens ----------------
+     Uses CSS zoom (not transform) so the box actually reflows at the smaller size —
+     transform:scale() keeps the original layout box (and its margin:auto centering)
+     at full size, which pushes an oversized sheet off-screen on narrow viewports. */
+  function fitPreviewToScreen() {
+    if (els.previewModal.hidden) return;
+    var wrap = document.querySelector(".preview-modal-body .paper-wrap");
+    var sheet = els.printTemplate;
     if (!wrap || !sheet) return;
-    sheet.style.transform = "";
-    if (window.innerWidth > 860) return;
+    sheet.style.zoom = "1";
     var natural = sheet.getBoundingClientRect().width;
     var available = wrap.clientWidth - 8;
     if (natural > available && natural > 0) {
       var scale = available / natural;
-      sheet.style.transform = "scale(" + scale.toFixed(4) + ")";
-      wrap.style.height = (sheet.getBoundingClientRect().height * scale) + "px";
+      sheet.style.zoom = scale.toFixed(4);
     }
   }
 
@@ -413,23 +480,36 @@
     els.amount.addEventListener("input", refreshWords);
     els.passedAmount.addEventListener("input", function () {
       passedTouchedByUser = true;
-      els.passedWords.textContent = amountToWords(els.passedAmount.value);
+      els.passedWords.textContent = els.passedAmount.value ? amountToWords(els.passedAmount.value) : "—";
+      syncPrintTemplate();
     });
     els.paymentMode.addEventListener("change", updatePaymentModeUI);
+
+    // Any other plain text field changing keeps the print template fresh.
+    els.form.addEventListener("input", function (e) {
+      var id = e.target && e.target.id;
+      if (id === "amount" || id === "passedAmount" || id === "headOfAc") return; // already handled above
+      syncPrintTemplate();
+    });
+    els.form.addEventListener("change", function (e) {
+      var id = e.target && e.target.id;
+      if (id === "paymentMode") return; // already handled above
+      syncPrintTemplate();
+    });
 
     $("btnNew").addEventListener("click", function () {
       if (confirm("Start a new blank voucher? Unsaved changes will be lost.")) clearForm();
     });
     $("btnSave").addEventListener("click", saveCurrentToHistory);
+    $("btnPreview").addEventListener("click", openPreview);
+    $("btnPreviewClose").addEventListener("click", closePreview);
+    els.previewBackdrop.addEventListener("click", closePreview);
     $("btnPrint").addEventListener("click", doPrint);
     $("btnPdf").addEventListener("click", doDownloadPdf);
 
-    $("btnHistoryToggle").addEventListener("click", function () {
-      els.historyPanel.classList.toggle("hidden");
-    });
-    $("btnHistoryClose").addEventListener("click", function () {
-      els.historyPanel.classList.add("hidden");
-    });
+    $("btnHistoryToggle").addEventListener("click", openHistory);
+    $("btnHistoryClose").addEventListener("click", closeHistory);
+    els.historyBackdrop.addEventListener("click", closeHistory);
 
     els.historyList.addEventListener("click", function (e) {
       var btn = e.target.closest("button[data-act]");
@@ -440,6 +520,7 @@
       if (!rec) return;
       if (act === "load") {
         populate(rec);
+        closeHistory();
         showToast("Loaded voucher No. " + (rec.no || ""));
       } else if (act === "print") {
         populate(rec);
@@ -458,15 +539,20 @@
       }
     });
 
-    window.addEventListener("resize", fitSheetToScreen);
-    window.addEventListener("afterprint", fitSheetToScreen);
+    window.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        if (!els.previewModal.hidden) closePreview();
+        else if (!els.historyPanel.classList.contains("hidden")) closeHistory();
+      }
+    });
+
+    window.addEventListener("resize", fitPreviewToScreen);
+    window.addEventListener("afterprint", fitPreviewToScreen);
 
     wireHeadOfAcCombo();
-    els.historyPanel.classList.add("hidden");
     clearForm();
     renderHistory();
     wireInstallButton();
-    setTimeout(fitSheetToScreen, 50);
   }
 
   document.addEventListener("DOMContentLoaded", init);
